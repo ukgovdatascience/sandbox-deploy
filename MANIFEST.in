@@ -1,0 +1,2 @@
+graft deploy/templates
+graft deploy/static

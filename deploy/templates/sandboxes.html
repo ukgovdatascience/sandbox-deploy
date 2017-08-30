@@ -1,0 +1,31 @@
+<html>
+
+  <body>
+    <h3>Sandboxes</h3>
+    <ul>
+      {% for sandbox in sandboxes %}
+        <li>
+          {{sandbox}}
+        </li>
+      {% endfor %}
+    </ul>
+
+    <h3>Deploy sandbox</h3>
+    <form method="post">
+      <div>
+        Github username:
+        <input type="text" name="username" value="davidread">
+      </div>
+      <div>
+        Email address:
+        <input type="text" name="email" value="david.read@digital.cabinet-office.gov.uk">
+      </div>
+      <div>
+        Full name:
+        <input type="text" name="fullname" value="David Read">
+      </div>
+      <input type="submit" value="Deploy">
+    </form>
+  </body>
+
+</html>
