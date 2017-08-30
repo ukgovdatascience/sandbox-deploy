@@ -37,8 +37,8 @@ if __name__ == '__main__':
     parser.add_argument('--platform-env',
                         default=os.environ.get('SANDBOX') or 'sandbox')
     parser.add_argument('--chart-env-config-dir',
-                        default=os.environ.get('CHART_ENV_CONFIG') or
-                        'chart-env-config')
+                        default=os.environ.get('CHART_ENV_CONFIG') or '../'
+                        'data-science-sandbox-infrastucture/chart-env-config')
     parser.add_argument('--helm', default=os.environ.get('HELM') or 'helm')
     subparsers = parser.add_subparsers()
 
