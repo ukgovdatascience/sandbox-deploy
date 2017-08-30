@@ -34,6 +34,12 @@ def run_script(filename, env_overrides):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--platform-env',
+                        default=os.environ.get('SANDBOX') or 'sandbox')
+    parser.add_argument('--chart-env-config-dir',
+                        default=os.environ.get('CHART_ENV_CONFIG') or
+                        'chart-env-config')
+    parser.add_argument('--helm', default=os.environ.get('HELM') or 'helm')
     subparsers = parser.add_subparsers()
 
     parser_ = subparsers.add_parser('deploy',
@@ -41,9 +47,10 @@ if __name__ == '__main__':
     parser_.add_argument('--username')
     parser_.add_argument('--email')
     parser_.add_argument('--fullname')
-    parser_.add_argument('--platform-env', default='sandbox')
-    parser_.add_argument('--chart-env-config-dir', default='chart-env-config')
-    parser_.add_argument('--helm', default='helm')
+    parser_.set_defaults(func=deploy)
+
+    parser_ = subparsers.add_parser('list',
+                                    help='Get a list of all the sandboxes')
     parser_.set_defaults(func=deploy)
 
     args = parser.parse_args()
