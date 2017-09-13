@@ -23,7 +23,7 @@ def pod_statuses(args):
 def get_sandboxes(args):
     output = run_script(
         ['kubectl', 'get', 'namespaces', '--output=json'], args)
-    namespace_info = json.loads(output.stdout)
+    namespace_info = json.loads(output.stdout.decode('utf8'))
     sandboxes = []
     for item in namespace_info['items']:
         assert item['kind'] == 'Namespace', item
