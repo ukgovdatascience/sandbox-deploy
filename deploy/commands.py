@@ -77,10 +77,15 @@ def run_script_and_print_output(command_line, args):
     print(output.stdout.decode('utf-8'))
 
 def run_script(command_line, args):
+    # ensure args is a dict
+    if isinstance(args, argparse.Namespace):
+        args = vars(args)
+
+    # transfer args to environment variables
     command_env = os.environ.copy()
-    for key in args:
+    for key, value in args.items():
         command_env[key.upper().replace('-', '_')] = \
-            getattr(args, key)
+            value
 
     return subprocess.run(
         command_line,
