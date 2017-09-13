@@ -9,7 +9,10 @@ from deploy import commands
 app = Flask('deploy.default_settings')
 app.config.from_object(__name__)
 app.config.from_envvar('DEPLOY_SETTINGS', silent=True)
-USERNAME = os.environ.get('SANDBOX_DEPLOY_USERNAME')
+
+# to avoid mishaps, you must set USERNAME. If set to blank then there is no
+# auth required (for local testing only).
+USERNAME = os.environ['SANDBOX_DEPLOY_USERNAME']
 PASSWORD = os.environ.get('SANDBOX_DEPLOY_PASSWORD')
 
 def check_auth(username, password):
