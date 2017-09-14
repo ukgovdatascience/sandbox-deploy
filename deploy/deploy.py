@@ -47,3 +47,9 @@ def show_entries():
 def get_sandboxes():
     sandboxes = commands.get_sandboxes(args={})
     return jsonify(sandboxes)
+
+@app.route('/api/pod-statuses', methods=['GET'])
+@requires_auth
+def get_pod_statuses():
+    data = commands.get_pod_statuses(args={})
+    return jsonify(data)
