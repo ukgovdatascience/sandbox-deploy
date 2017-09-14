@@ -36,7 +36,7 @@ def get_sandboxes(args):
 def get_pod_statuses(args):
     output = run_script(
         ['kubectl', 'get', 'pods', '--all-namespaces', '--output=json'], args)
-    pod_info = json.loads(output.stdout)
+    pod_info = json.loads(output.stdout.decode('utf8'))
     pod_statuses = []
     for item in pod_info['items']:
         namespace = item['metadata']['namespace']
