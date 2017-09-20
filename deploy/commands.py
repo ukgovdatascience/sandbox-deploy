@@ -84,8 +84,9 @@ def run_script(command_line, args):
     # transfer args to environment variables
     command_env = os.environ.copy()
     for key, value in args.items():
-        command_env[key.upper().replace('-', '_')] = \
-            value
+        if value:
+            command_env[key.upper().replace('-', '_')] = \
+                value
 
     return subprocess.run(
         command_line,
@@ -101,7 +102,7 @@ if __name__ == '__main__':
         parser_.add_argument('--platform-env',
                              default=os.environ.get('SANDBOX') or 'sandbox')
         parser_.add_argument(
-            '--chart-env-config-dir',
+            '--chart-env-config',
             default=os.environ.get('CHART_ENV_CONFIG') or
             '../data-science-sandbox-infrastucture/chart-env-config')
         parser_.add_argument('--helm', default=os.environ.get('HELM') or
