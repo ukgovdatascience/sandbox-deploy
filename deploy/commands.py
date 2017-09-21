@@ -9,8 +9,10 @@ assert sys.version_info.major == 3, 'Use Python 3'
 
 
 def deploy(args):
-    run_script_and_print_output(
-        command_line_from_local_file('deploy.sh'), args)
+    run_and_print_output_and_exit(
+        run_script,
+        command_line_from_local_file('deploy.sh'),
+        args)
 
 def list_(args):
     for sandbox in get_sandboxes(args):
@@ -21,8 +23,7 @@ def pod_statuses(args):
         print(pod_status)
 
 def get_sandboxes(args):
-    output = run_script(
-        ['kubectl', 'get', 'namespaces', '--output=json'], args)
+    output = run_(['kubectl', 'get', 'namespaces', '--output=json'])
     namespace_info = json.loads(output.stdout.decode('utf8'))
     sandboxes = []
     for item in namespace_info['items']:
@@ -34,8 +35,8 @@ def get_sandboxes(args):
     return sandboxes
 
 def get_pod_statuses(args):
-    output = run_script(
-        ['kubectl', 'get', 'pods', '--all-namespaces', '--output=json'], args)
+    output = run_(
+        ['kubectl', 'get', 'pods', '--all-namespaces', '--output=json'])
     pod_info = json.loads(output.stdout.decode('utf8'))
     pod_statuses = []
     for item in pod_info['items']:
@@ -62,21 +63,50 @@ def get_pod_statuses(args):
         pod_statuses.append(pod)
     return pod_statuses
 
+def delete_user_cmd(args):
+    run_and_print_output_and_exit(delete_user, args)
+
+def delete_user(args):
+    # $HELM delete init-user-davidread --purge
+    return run_(
+        [args['helm'], 'delete', 'init-user-{}'.format(args['username']),
+         '--purge'])
+
+def delete_chart_cmd(args):
+    run_and_print_output_and_exit(delete_chart, args)
+
+def delete_chart(args):
+    # $HELM delete davidread-rstudio --purge
+    return run_(
+        [args['helm'], 'delete', '{}-{}'.format(args['username'], args['chart']),
+         '--purge'])
+
+# utils
 
 def command_line_from_local_file(filename):
     this_dir = os.path.dirname(os.path.realpath(__file__))
     return [os.path.join(this_dir, filename)]
 
-def run_script_and_print_output(command_line, args):
+def run_and_print_output_and_exit(func, *kargs, **kwargs):
+    '''Calls function that runs something on the command-line.
+    Prints the output and exits the program with appropriate exit code.
+    '''
     try:
-        output = run_script(command_line, args)
+        output = func(*kargs, **kwargs)
     except subprocess.CalledProcessError as err:
         print(err.output.decode('utf-8'))
         print('ERROR:', err)
-        return False
+        sys.exit(1)
     print(output.stdout.decode('utf-8'))
+    sys.exit(0)
 
 def run_script(command_line, args):
+    '''Runs one of our bash scripts.
+    Converts the args to environment variables, as is the convention for our
+    scripts.
+    Returns a CompletedProcess instance containing the output.
+    Raises subprocess.CalledProcessError on non-zero exit code.
+    '''
     # ensure args is a dict
     if isinstance(args, argparse.Namespace):
         args = vars(args)
@@ -88,23 +118,32 @@ def run_script(command_line, args):
             command_env[key.upper().replace('-', '_')] = \
                 value
 
+    return run_(command_line, command_env)
+
+def run_(command_line, env_vars=None):
+    '''Runs a command.
+    Returns a CompletedProcess instance containing the output.
+    Raises subprocess.CalledProcessError on non-zero exit code.
+    '''
     return subprocess.run(
         command_line,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,  # so errors are not swallowed
         check=True,
-        env=command_env)
+        env=env_vars or os.environ)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    def add_helm_arguments(parser_):
-        parser_.add_argument('--platform-env',
-                             default=os.environ.get('SANDBOX') or 'sandbox')
-        parser_.add_argument(
-            '--chart-env-config',
-            default=os.environ.get('CHART_ENV_CONFIG') or
-            '../data-science-sandbox-infrastucture/chart-env-config')
+    def add_helm_arguments(parser_, include_charts=True):
+        if include_charts:
+            parser_.add_argument('--platform-env',
+                                 default=os.environ.get('SANDBOX') or
+                                 'sandbox')
+            parser_.add_argument(
+                '--chart-env-config',
+                default=os.environ.get('CHART_ENV_CONFIG') or
+                '../data-science-sandbox-infrastucture/chart-env-config')
         parser_.add_argument('--helm', default=os.environ.get('HELM') or
                              'helm')
     subparsers = parser.add_subparsers()
@@ -124,6 +163,23 @@ if __name__ == '__main__':
     parser_ = subparsers.add_parser('pod_statuses',
                                     help='Get the statuses of all user pods')
     parser_.set_defaults(func=pod_statuses)
+
+    parser_ = subparsers.add_parser('delete_user',
+                                    help='Delete a user\'s sandbox '
+                                    '(everything but the apps?)')
+    add_helm_arguments(parser_, include_charts=False)
+    parser_.add_argument('username', default=os.environ.get('USERNAME'))
+    parser_.set_defaults(func=delete_user_cmd)
+
+    parser_ = subparsers.add_parser('delete_chart',
+                                    help='Delete one chart/app in someone\'s '
+                                    'sandbox')
+    add_helm_arguments(parser_, include_charts=False)
+    parser_.add_argument('username', default=os.environ.get('USERNAME'))
+    parser_.add_argument('chart',
+                         default=os.environ.get('CHART') or 'rstudio',
+                         help='NB "<username>-" is prepended automatically')
+    parser_.set_defaults(func=delete_chart_cmd)
 
     args = parser.parse_args()
     if 'func' not in args:
