@@ -60,9 +60,9 @@ helm repo add mojanalytics https://ministryofjustice.github.io/analytics-platfor
 Playing with sandboxes using helm:
 ```
 export KUBECONFIG=~/.kube/config
-export USERNAME=andreagrandi
-export EMAIL=andrea.grandi@<domain>.gov.uk
-export FULLNAME=Andrea Grandi
+export USERNAME=johnsmith
+export EMAIL=john.smith@<domain>.gov.uk
+export FULLNAME=John Smith
 export PLATFORM_ENV=sandbox
 export HELM=helm
 cd ~/sandbox/data-science-sandbox-infrastucture
