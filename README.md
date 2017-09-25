@@ -126,7 +126,7 @@ flask run --port 7000
 ## Deployment to EC2
 
 ```
-# join GDS vpn
+# if you're not on a GDS IP you need to join the GDS VPN
 ssh -i "~/.ssh/dread-data-science-aws.pem" ubuntu@ec2-35-176-150-167.eu-west-2.compute.amazonaws.com
 git clone https://github.com/ukgovdatascience/sandbox-deploy.git
 git clone https://github.com/ukgovdatascience/data-science-sandbox-infrastucture.git
