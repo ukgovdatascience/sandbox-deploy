@@ -1,5 +1,6 @@
 import os
 from functools import wraps
+import subprocess
 
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify, Response
@@ -14,6 +15,8 @@ app.config.from_envvar('DEPLOY_SETTINGS', silent=True)
 # auth required (for local testing only).
 USERNAME = os.environ['SANDBOX_DEPLOY_USERNAME']
 PASSWORD = os.environ.get('SANDBOX_DEPLOY_PASSWORD')
+
+HELM = os.environ.get('SANDBOX_DEPLOY_HELM')
 
 def check_auth(username, password):
     return username == USERNAME and password == PASSWORD
@@ -53,3 +56,20 @@ def get_sandboxes():
 def get_pod_statuses():
     data = commands.get_pod_statuses(args={})
     return jsonify(data)
+
+@app.route('/api/deploy', methods=['POST'])
+@requires_auth
+def deploy():
+    request_data = request.get_json()
+    data = dict(
+        fullname=request_data['name'],
+        username=request_data['github'],
+        email=request_data['email'],
+        )
+    try:
+        response = commands.deploy(args=data)
+    except subprocess.CalledProcessError as e:
+        app.logger.error('Error calling deploy.sh: %s', str(e.output))
+        return Response('Error calling deploy', 500)
+    # currently just text
+    return jsonify({'text': response.stdout.decode('utf-8')})

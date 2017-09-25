@@ -7,12 +7,15 @@ import json
 
 assert sys.version_info.major == 3, 'Use Python 3'
 
+DEFAULT_CHART_ENV_CONFIG = \
+    '../data-science-sandbox-infrastucture/chart-env-config'
+DEFAULT_PLATFORM_ENV = 'sandbox'
+DEFAULT_HELM = 'helm'
 
-def deploy(args):
-    run_and_print_output_and_exit(
-        run_script,
-        command_line_from_local_file('deploy.sh'),
-        args)
+# Command-line functions
+
+def deploy_cmd(args):
+    run_and_print_output_and_exit(deploy, args)
 
 def list_(args):
     for sandbox in get_sandboxes(args):
@@ -21,6 +24,26 @@ def list_(args):
 def pod_statuses(args):
     for pod_status in get_pod_statuses(args):
         print(pod_status)
+
+def delete_user_cmd(args):
+    run_and_print_output_and_exit(delete_user, args)
+
+def delete_chart_cmd(args):
+    run_and_print_output_and_exit(delete_chart, args)
+
+
+# Actions - can be called from either command-line OR the Flask API
+
+def deploy(args):
+    '''Runs the deploy script.
+    This can be called from either the command-line OR the API.
+    Returns a CompletedProcess
+    Raises subprocess.CalledProcessError on non-zero exit code.
+    '''
+    set_defaults_from_environment(args)
+    return run_script(
+        command_line_from_local_file('deploy.sh'),
+        args)
 
 def get_sandboxes(args):
     output = run_(['kubectl', 'get', 'namespaces', '--output=json'])
@@ -63,17 +86,11 @@ def get_pod_statuses(args):
         pod_statuses.append(pod)
     return pod_statuses
 
-def delete_user_cmd(args):
-    run_and_print_output_and_exit(delete_user, args)
-
 def delete_user(args):
     # $HELM delete init-user-davidread --purge
     return run_(
         [args['helm'], 'delete', 'init-user-{}'.format(args['username']),
          '--purge'])
-
-def delete_chart_cmd(args):
-    run_and_print_output_and_exit(delete_chart, args)
 
 def delete_chart(args):
     # $HELM delete davidread-rstudio --purge
@@ -81,7 +98,30 @@ def delete_chart(args):
         [args['helm'], 'delete', '{}-{}'.format(args['username'], args['chart']),
          '--purge'])
 
-# utils
+
+# Action utils
+
+def set_defaults_from_environment(args):
+    arg_keys_and_defaults = (
+        ('CHART_ENV_CONFIG', DEFAULT_CHART_ENV_CONFIG),
+        ('PLATFORM_ENV', DEFAULT_PLATFORM_ENV),
+        ('HELM', DEFAULT_HELM),
+        )
+    for key, default_value in arg_keys_and_defaults:
+        set_default_from_environment(args, key, default_value)
+
+def set_default_from_environment(dict_, key, default_value):
+    '''Given a config dictionary, if the key is not set with a value,
+    gets it from the environment or falls back to a given default value.
+    '''
+    if dict_.get(key):
+        return
+    env_key = key.upper().replace('-', '_')
+    if env_key in os.environ:
+        dict_[key] = os.environ[env_key]
+        return
+    if default_value:
+        dict_[key] = default_value
 
 def command_line_from_local_file(filename):
     this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -139,13 +179,13 @@ if __name__ == '__main__':
         if include_charts:
             parser_.add_argument('--platform-env',
                                  default=os.environ.get('SANDBOX') or
-                                 'sandbox')
+                                 DEFAULT_PLATFORM_ENV)
             parser_.add_argument(
                 '--chart-env-config',
                 default=os.environ.get('CHART_ENV_CONFIG') or
-                '../data-science-sandbox-infrastucture/chart-env-config')
+                DEFAULT_CHART_ENV_CONFIG)
         parser_.add_argument('--helm', default=os.environ.get('HELM') or
-                             'helm')
+                             DEFAULT_HELM)
     subparsers = parser.add_subparsers()
 
     parser_ = subparsers.add_parser('deploy',
@@ -154,7 +194,7 @@ if __name__ == '__main__':
     parser_.add_argument('--username', default=os.environ.get('USERNAME'))
     parser_.add_argument('--email', default=os.environ.get('EMAIL'))
     parser_.add_argument('--fullname', default=os.environ.get('FULLNAME'))
-    parser_.set_defaults(func=deploy)
+    parser_.set_defaults(func=deploy_cmd)
 
     parser_ = subparsers.add_parser('list',
                                     help='Get a list of all the sandboxes')
