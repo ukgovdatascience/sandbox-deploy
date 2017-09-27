@@ -79,3 +79,28 @@ def deploy():
         return Response('Error calling deploy', 500)
     # currently just text
     return jsonify({'text': response.stdout.decode('utf-8')})
+
+
+@app.route('/api/delete', methods=['POST'])
+@requires_auth
+def delete():
+    request_data = request.get_json()
+    data = dict(username=request_data['github'])
+
+    # Delete the user
+    try:
+        response = commands.delete_user(args=data)
+    except subprocess.CalledProcessError as e:
+        app.logger.error('Error calling deploy.sh: %s', str(e.output))
+        return Response('Error calling deploy', 500)
+
+    # Delete the app
+    try:
+        data['chart'] = 'rstudio'
+        response = commands.delete_chart(args=data)
+    except subprocess.CalledProcessError as e:
+        app.logger.error('Error calling deploy.sh: %s', str(e.output))
+        return Response('Error calling deploy', 500)
+
+    # currently just text
+    return jsonify({'text': response.stdout.decode('utf-8')})
