@@ -18,8 +18,10 @@ PASSWORD = os.environ.get('SANDBOX_DEPLOY_PASSWORD')
 
 HELM = os.environ.get('SANDBOX_DEPLOY_HELM')
 
+
 def check_auth(username, password):
     return username == USERNAME and password == PASSWORD
+
 
 def challenge():
     """Sends a 401 response that enables basic auth"""
@@ -27,6 +29,7 @@ def challenge():
         'Could not verify your access level for that URL.\n'
         'You have to login with proper credentials', 401,
         {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
 
 def requires_auth(f):
     @wraps(f)
@@ -45,17 +48,20 @@ def show_entries():
     sandboxes = commands.get_sandboxes({})
     return render_template('sandboxes.html', sandboxes=sandboxes)
 
+
 @app.route('/api/sandboxes', methods=['GET'])
 @requires_auth
 def get_sandboxes():
     sandboxes = commands.get_sandboxes(args={})
     return jsonify(sandboxes)
 
+
 @app.route('/api/pod-statuses', methods=['GET'])
 @requires_auth
 def get_pod_statuses():
     data = commands.get_pod_statuses(args={})
     return jsonify(data)
+
 
 @app.route('/api/deploy', methods=['POST'])
 @requires_auth
@@ -71,5 +77,30 @@ def deploy():
     except subprocess.CalledProcessError as e:
         app.logger.error('Error calling deploy.sh: %s', str(e.output))
         return Response('Error calling deploy', 500)
+    # currently just text
+    return jsonify({'text': response.stdout.decode('utf-8')})
+
+
+@app.route('/api/delete', methods=['POST'])
+@requires_auth
+def delete():
+    request_data = request.get_json()
+    data = dict(username=request_data['github'])
+
+    # Delete the user
+    try:
+        response = commands.delete_user(args=data)
+    except subprocess.CalledProcessError as e:
+        app.logger.error('Error calling deploy.sh: %s', str(e.output))
+        return Response('Error calling deploy', 500)
+
+    # Delete the app
+    try:
+        data['chart'] = 'rstudio'
+        response = commands.delete_chart(args=data)
+    except subprocess.CalledProcessError as e:
+        app.logger.error('Error calling deploy.sh: %s', str(e.output))
+        return Response('Error calling deploy', 500)
+
     # currently just text
     return jsonify({'text': response.stdout.decode('utf-8')})
