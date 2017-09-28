@@ -145,9 +145,6 @@ DESIRED_VERSION=v2.3.0 bash -c 'curl https://raw.githubusercontent.com/kubernete
 helm init
 helm repo add mojanalytics https://ministryofjustice.github.io/analytics-platform-helm-charts/charts/
 export PLATFORM_ENV=sandbox
-export USERNAME=davidread
-export EMAIL=david.read@<domain>.gov.uk
-export FULLNAME="D Read"
 export CHART_ENV_CONFIG=../data-science-sandbox-infrastucture/chart-env-config
 export HELM=helm
 export SANDBOX_DEPLOY_USERNAME=deploy
@@ -163,7 +160,7 @@ pip install -r requirements.txt
 pip install gunicorn
 
 export FLASK_APP=deploy/deploy.py
-flask run --port 7000
+flask run --port 7000  # just to check it runs
 
 sudo apt-get install nginx
 sudo vim /etc/nginx/conf.d/deploy.conf && sudo systemctl reload nginx
@@ -200,4 +197,20 @@ sudo certbot --nginx
 $ sudo vim /etc/cron.d/certbot
 # Add --renew-hook bit to the last line:
   0 */12 * * * root test -x /usr/bin/certbot && perl -e 'sleep int(rand(3600))' && certbot -q renew --renew-hook "/etc/init.d/nginx reload"
+```
+
+## Redeploy updates to EC2
+```
+ssh -i "~/.ssh/dread-data-science-aws.pem" ubuntu@ec2-35-176-150-167.eu-west-2.compute.amazonaws.com
+cd ~/sandbox-deploy
+git pull
+. ~/venv/bin/activate
+export PLATFORM_ENV=sandbox
+export CHART_ENV_CONFIG=../data-science-sandbox-infrastucture/chart-env-config
+export HELM=helm
+export SANDBOX_DEPLOY_USERNAME=deploy
+export SANDBOX_DEPLOY_PASSWORD=<password>
+killall gunicorn
+gunicorn deploy.deploy:app -b localhost:8000 &
+# Confirm it's running: https://deploy.sandbox.data-science.org.uk/
 ```
