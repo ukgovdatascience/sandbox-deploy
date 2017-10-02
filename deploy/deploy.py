@@ -16,8 +16,6 @@ app.config.from_envvar('DEPLOY_SETTINGS', silent=True)
 USERNAME = os.environ['SANDBOX_DEPLOY_USERNAME']
 PASSWORD = os.environ.get('SANDBOX_DEPLOY_PASSWORD')
 
-HELM = os.environ.get('SANDBOX_DEPLOY_HELM')
-
 
 def check_auth(username, password):
     return username == USERNAME and password == PASSWORD
