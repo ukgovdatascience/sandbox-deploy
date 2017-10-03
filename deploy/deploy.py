@@ -106,7 +106,7 @@ def delete():
 
 @app.route('/api/redeploy', methods=['POST'])
 @requires_auth
-def redploy():
+def redeploy():
     request_data = request.get_json()
     data = dict(username=request_data['github'])
 
@@ -126,6 +126,8 @@ def redploy():
         return Response('Error calling deploy', 500)
 
     # Deploy the app again
+    # fullname and email are not really needed to deploy a sandbox
+    # so we can fake them.
     data = dict(
         fullname='redeploy',
         username=request_data['github'],
