@@ -14,19 +14,24 @@ DEFAULT_HELM = 'helm'
 
 # Command-line functions
 
+
 def deploy_cmd(args):
     run_and_print_output_and_exit(deploy, args)
+
 
 def list_(args):
     for sandbox in get_sandboxes(args):
         print(sandbox)
 
+
 def pod_statuses(args):
     for pod_status in get_pod_statuses(args):
         print(pod_status)
 
+
 def delete_user_cmd(args):
     run_and_print_output_and_exit(delete_user, args)
+
 
 def delete_chart_cmd(args):
     run_and_print_output_and_exit(delete_chart, args)
@@ -45,6 +50,7 @@ def deploy(args):
         command_line_from_local_file('deploy.sh'),
         args)
 
+
 def get_sandboxes(args):
     output = run_(['kubectl', 'get', 'namespaces', '--output=json'])
     namespace_info = json.loads(output.stdout.decode('utf8'))
@@ -56,6 +62,7 @@ def get_sandboxes(args):
             assert item['status'] == {'phase': 'Active'}, item
             sandboxes.append(name.replace('user-', ''))
     return sandboxes
+
 
 def get_pod_statuses(args):
     output = run_(
@@ -86,16 +93,20 @@ def get_pod_statuses(args):
         pod_statuses.append(pod)
     return pod_statuses
 
+
 def delete_user(args):
     # $HELM delete init-user-davidread --purge
+    set_defaults_from_environment(args)
     return run_(
-        [args['helm'], 'delete', 'init-user-{}'.format(args['username']),
+        [args['HELM'], 'delete', 'init-user-{}'.format(args['username']),
          '--purge'])
+
 
 def delete_chart(args):
     # $HELM delete davidread-rstudio --purge
+    set_defaults_from_environment(args)
     return run_(
-        [args['helm'], 'delete', '{}-{}'.format(args['username'], args['chart']),
+        [args['HELM'], 'delete', '{}-{}'.format(args['username'], args['chart']),
          '--purge'])
 
 
@@ -110,6 +121,7 @@ def set_defaults_from_environment(args):
     for key, default_value in arg_keys_and_defaults:
         set_default_from_environment(args, key, default_value)
 
+
 def set_default_from_environment(dict_, key, default_value):
     '''Given a config dictionary, if the key is not set with a value,
     gets it from the environment or falls back to a given default value.
@@ -123,9 +135,11 @@ def set_default_from_environment(dict_, key, default_value):
     if default_value:
         dict_[key] = default_value
 
+
 def command_line_from_local_file(filename):
     this_dir = os.path.dirname(os.path.realpath(__file__))
     return [os.path.join(this_dir, filename)]
+
 
 def run_and_print_output_and_exit(func, *kargs, **kwargs):
     '''Calls function that runs something on the command-line.
@@ -139,6 +153,7 @@ def run_and_print_output_and_exit(func, *kargs, **kwargs):
         sys.exit(1)
     print(output.stdout.decode('utf-8'))
     sys.exit(0)
+
 
 def run_script(command_line, args):
     '''Runs one of our bash scripts.
@@ -159,6 +174,7 @@ def run_script(command_line, args):
                 value
 
     return run_(command_line, command_env)
+
 
 def run_(command_line, env_vars=None):
     '''Runs a command.
