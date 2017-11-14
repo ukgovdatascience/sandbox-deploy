@@ -25,8 +25,14 @@ def list_(args):
 
 
 def pod_statuses(args):
-    for pod_status in get_pod_statuses(args):
-        print(pod_status)
+    try:
+        for pod_status in get_pod_statuses(args):
+            print(pod_status)
+    except subprocess.CalledProcessError as err:
+        print(err.output.decode('utf-8'))
+        print('ERROR:', err)
+        sys.exit(1)
+
 
 
 def delete_user_cmd(args):
@@ -81,6 +87,7 @@ def get_pod_statuses(args):
                             key=lambda x: x['lastTransitionTime'])
         latest_status = conditions[-1]
         pod['status'] = latest_status['type']
+        pod['lastTransitionTime'] = latest_status['lastTransitionTime']
         pod['error'] = any([
             condition['status'] == "False"
             for condition in item['status']['conditions']
