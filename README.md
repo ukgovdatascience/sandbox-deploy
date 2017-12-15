@@ -94,8 +94,6 @@ export SANDBOX_DEPLOY_USERNAME=
 Install the dependencies etc:
 ```
 workon sandbox-deploy
-cd ..
-git clone
 pip install -r requirements.txt
 ```
 
@@ -105,23 +103,18 @@ Always activate the environment:
 ```
 workon sandbox-deploy
 ```
-
-The deploy script can be run on its own:
+Then run commands like this:
 ```
-USERNAME=davidread deploy/deploy.sh
-```
-
-python deploy.py  #etc
-
-# examples
-python3 deploy/commands.py deploy
+python3 deploy/commands.py list
+python3 deploy/commands.py pod_statuses
 python3 deploy/commands.py deploy --username=davidread --email='david.read@<domain>.gov.uk' --fullname='D Read'
+```
 
-# run deploy app
+To run the deploy app:
+```
 workon sandbox-deploy
-
 flask run --port 7000
-
+```
 
 ## Deployment to EC2
 
@@ -140,7 +133,7 @@ rsync -e "ssh -i ~/.ssh/dread-data-science-aws.pem" ~/.kube/sandbox.data-science
 rsync -e "ssh -i ~/.ssh/dread-data-science-aws.pem" ~/sandbox/data-science-sandbox-infrastucture/chart-env-config/sandbox/*.yml ubuntu@ec2-35-176-150-167.eu-west-2.compute.amazonaws.com:~/data-science-sandbox-infrastucture/chart-env-config/sandbox/
 # run on the EC2 box:
 kubectl config set-cluster default-cluster --server=https://dashboard.services.sandbox.data-science.org.uk
-DESIRED_VERSION=v2.3.0 bash -c 'curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash'
+DESIRED_VERSION=v2.7.2 bash -c 'curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash'
 # helm installed into /usr/local/bin/helm
 helm init
 helm repo add mojanalytics https://ministryofjustice.github.io/analytics-platform-helm-charts/charts/
