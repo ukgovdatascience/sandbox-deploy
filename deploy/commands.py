@@ -81,6 +81,9 @@ def get_pod_statuses(args):
             continue
         pod = {}
         pod['user'] = namespace.replace('user-', '')
+        if not 'app' in item['metadata']['labels']:
+            # e.g. config-git-<username>-<hex>
+            continue
         pod['app'] = item['metadata']['labels']['app']
         pod['phase'] = item['status']['phase']  # Running or Pending
         conditions = sorted(item['status']['conditions'],
