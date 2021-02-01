@@ -1,6 +1,6 @@
 Flask==0.12.2
 click==6.7          # from flask
 itsdangerous==0.24  # from flask
-Jinja2==2.9.6       # from flask
+Jinja2==2.11.3       # from flask
 MarkupSafe==1.0     # from flask
 Werkzeug==0.12.2    # from flask
